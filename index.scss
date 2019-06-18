@@ -1,0 +1,21 @@
+$classPrefix: ".lm-swiper-";
+#{$classPrefix}{
+    &wrap{
+        width: 100%;
+        overflow: hidden;
+    }
+    &contianer{
+        display: flex;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        position: relative;
+        width: auto;
+        
+        // flex-grow: 1;
+        &>div{
+            float: left;
+            flex-shrink: 0;
+        }
+    }
+}
