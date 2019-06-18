@@ -3,14 +3,14 @@
  * @Author: wangzhijie01
  * @Date: 2019-06-17 16:46:40
  * @LastEditors: wangzhijie01
- * @LastEditTime: 2019-06-18 11:25:23
+ * @LastEditTime: 2019-06-18 16:48:07
  */
 import React from 'react';
 import PropTypes from 'prop-types';
 
 import './index.scss';
 
-export default class PreviewSlider extends React.PureComponent {
+export default class Swiper extends React.PureComponent {
     static propTypes = {
         widthOfSiblingSlidePreview: PropTypes.number, // 下一页和下一页预显示宽度
         stealWidth: PropTypes.number, // 每次切换要偷取的宽度 为正数时当前页序号越大 上一页显示的宽度也多 负数则相反
@@ -22,17 +22,25 @@ export default class PreviewSlider extends React.PureComponent {
 
     static defaultProps ={
         widthOfSiblingSlidePreview: 18,
-        stealWidth: 5,
+        stealWidth: 1,
         speed: 300,
         pageChange: () => {},
         pageTranstionEnd: () => {},
     }
 
-    componentDidMount() {
+    onceInit() {
         // 获取每个页面的宽度
-        this.itemWidth = document.querySelector('.lm-swiper-contianer').children[0].offsetWidth;
+        this.itemWidth = document.querySelector('.lm-swiper-wrap').offsetWidth - this.props.widthOfSiblingSlidePreview * 2;
         // 缓存页面的容器元素
         this.containerEl = document.querySelector('.lm-swiper-contianer');
+        // 当前容器的偏移量
+        this.currentX = this.props.widthOfSiblingSlidePreview;
+        // 是否正在进行动画
+        this.slidding = false;
+        this.listenTransitionEnd();
+    }
+
+    initAfterRender() {
         // 记录滑动开始时候的坐标和时间
         this.start = {};
         // 记录滑动结束的偏移量
@@ -41,15 +49,19 @@ export default class PreviewSlider extends React.PureComponent {
         this.oldPageIndex = 0;
         // 当前页面索引
         this.activeIndex = 0;
-        // 当前容器的偏移量
-        this.currentX = this.props.widthOfSiblingSlidePreview;
-        // 是否正在进行动画
-        this.slidding = false;
         for (const item of this.containerEl.children) {
-            item.number = 0;
             item.addEventListener('touchstart', this.onTouchStart, false);
         }
-        this.listenTransitionEnd();
+    }
+
+    componentDidMount() {
+        this.onceInit();
+        this.initAfterRender();
+    }
+
+    componentDidUpdate() {
+        this.initAfterRender();
+        this.slideSilent(this.activeIndex);
     }
 
     componentWillUnmount() {
@@ -167,13 +179,21 @@ export default class PreviewSlider extends React.PureComponent {
     }
 
     // 滑到指定的页面
-    slide(index) {
+    slide(index, silent = false) {
         this.props.pageChange(this.oldPageIndex, this.activeIndex);
         this.activeIndex = index;
         this.slidding = true;
         this.currentX = this.props.widthOfSiblingSlidePreview - this.itemWidth * index + this.props.stealWidth * this.activeIndex;
         this.containerEl.style.transform = `translateX(${this.currentX}px)`;
-        this.containerEl.style.transitionDuration = `${this.props.speed}ms`;
+        if (silent) {
+            this.containerEl.style.transitionDuration = '0ms';
+        } else {
+            this.containerEl.style.transitionDuration = `${this.props.speed}ms`;
+        }
+    }
+
+    slideSilent(index) {
+        this.slide(index, true);
     }
 
     render() {
